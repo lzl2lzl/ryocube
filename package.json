@@ -1,0 +1,11 @@
+{
+  "name": "ryocube",
+  "private": true,
+  "description": "霸道了了在房间：给用 iPad 画画的亲友做的轻量陪伴网页",
+  "homepage": "https://ryocube.netlify.app/",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node --test tests/test_room_behavior.js tests/test_room_clock.js tests/test_room_physics.js"
+  }
+}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d8cce6"><meta name="description" content="霸道了了在房间：隔着窗户，看他在紫色房间里寻找出口。"><meta name="application-name" content="霸道了了在房间"><meta name="apple-mobile-web-app-title" content="霸道了了在房间"><meta property="og:title" content="霸道了了在房间">
+<title>霸道了了在房间</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- THESIS: The browser is a window into a captive character's purple room.
+OWN-WORLD: Original character art in a perspective room, glass, rain, fog and local-time lighting.
+STORY: He searches for an exit when left alone; after bedtime, tapping the glass reveals him in lamplight.
+FIRST VIEWPORT: Only the room, a small clock at top left and settings at top right; no visible name/status.
+FORM: User-prescribed window/aquarium scene, sprite depth staging rather than a modeled 3D character.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
+<main id="companion" class="companion" aria-label="霸道了了在房间">
+ <div id="app-content" class="app-content">
+  <div id="room-viewport" class="room-viewport">
+  <section id="tank" class="tank" aria-label="窗户，轻点玻璃查看房间" tabindex="0">
+   <div class="scene-content">
+    <div class="room" aria-hidden="true">
+     <div class="plane back-wall"><span class="door-outline"></span><span class="wall-lamp"></span><div class="lamplight"></div><span class="bed"><i></i></span></div>
+     <div class="plane left-wall"></div><div class="plane right-wall"></div><div class="plane ceiling"></div><div class="plane floor"></div>
+    </div>
+    <div id="actor-stage" class="actor-stage"><div id="actor-shadow" class="actor-shadow" aria-hidden="true"></div><div id="actor" class="actor"><button id="character" class="character" aria-label="框里的角色，轻点回应，长按设置"><img id="sprite" width="512" height="512" alt="" draggable="false"></button></div></div>
+   </div>
+   <div class="sunlight" aria-hidden="true"><i></i><i></i><i></i></div><div class="nightlight" aria-hidden="true"></div><div id="rain" class="rain" aria-hidden="true"></div><div class="fog" aria-hidden="true"></div>
+   <div class="front-glass" aria-hidden="true"></div><div id="glass-cracks" class="glass-cracks" aria-hidden="true"></div><div class="window-frame" aria-hidden="true"></div>
+   <div class="bubble-space"><p id="bubble" class="bubble" role="status" aria-live="polite"></p></div>
+  </section>
+  <div id="focus-effect" class="focus-effect" aria-hidden="true"></div>
+  <div id="clock-hud" class="clock-hud" aria-live="off" hidden><div id="loop-hud" class="hud-readout" hidden><span id="loop-hud-label"></span><output id="loop-hud-value"></output></div><div id="watch-hud" class="hud-readout" hidden><span id="watch-hud-label"></span><output id="watch-hud-value"></output></div></div>
+  </div>
+  <header class="room-controls">
+   <button id="open-timer" class="icon-button clock-button" aria-label="设置闹铃" title="闹铃"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg><span class="timer-dot" aria-hidden="true"></span></button>
+   <div class="controls-right"><button id="rotate-view" class="icon-button" aria-label="顺时针旋转90度" title="旋转90°"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 7a8 8 0 1 0 2 8M18 3v5h-5"></path></svg></button><button id="menu-toggle" class="icon-button" aria-label="打开设置" aria-expanded="false" aria-controls="companion-menu" title="设置"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg></button></div>
+  </header>
+ </div>
+ <div id="panels-viewport" class="panels-viewport">
+ <button id="menu-backdrop" class="menu-backdrop" type="button" tabindex="-1" aria-label="关闭菜单" hidden></button>
+ <div id="companion-menu" class="companion-menu" hidden><button id="switch-form">变成狐狸</button><button id="sleep-toggle">哄他睡觉</button><button id="open-settings">房间设置</button><a id="open-guide" href="guide.html" target="_blank" rel="noopener noreferrer" aria-label="使用指南，在新标签页打开"><span>使用指南</span><span class="external-link-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"></path></svg></span></a></div>
+ <div id="sheet-overlay" class="sheet-overlay" hidden><div class="sheet-backdrop" aria-hidden="true"></div>
+  <section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">
+   <header class="sheet-header"><h2 id="sheet-title">闹铃</h2><button id="close-sheet" class="icon-button" aria-label="关闭设置">×</button></header>
+   <div id="clock-content" hidden>
+    <div class="clock-tabs" role="tablist" aria-label="计时方式"><button id="tab-alarm" role="tab" data-clock-mode="alarm" aria-controls="clock-alarm" aria-selected="true">单次闹钟</button><button id="tab-loop" role="tab" data-clock-mode="loop" aria-controls="clock-loop" aria-selected="false">循环专注</button><button id="tab-watch" role="tab" data-clock-mode="watch" aria-controls="clock-watch" aria-selected="false">计时了了</button></div>
+    <div id="clock-alarm" class="clock-panel" role="tabpanel" aria-labelledby="tab-alarm">
+     <form id="alarm-form"><label class="time-picker"><span class="sr-only">响铃时间</span><input id="alarm-time" type="time" required></label><button class="primary" type="submit">设定闹钟</button></form>
+     <div id="alarm-running" hidden><output id="alarm-display" class="clock-digits" aria-live="off"></output><p id="alarm-remaining" class="clock-caption"></p><button id="alarm-cancel" class="secondary full-width">取消闹钟</button></div>
+    </div>
+    <div id="clock-loop" class="clock-panel" role="tabpanel" aria-labelledby="tab-loop" hidden>
+     <form id="loop-form"><div class="duration-pair"><label>专注<span><input id="focus-minutes" type="number" inputmode="numeric" min="1" max="180" value="25" required>分钟</span></label><label>休息<span><input id="rest-minutes" type="number" inputmode="numeric" min="1" max="180" value="5" required>分钟</span></label></div><button class="primary" type="submit">开始循环</button></form>
+     <div id="loop-running" hidden><p id="loop-phase" class="clock-caption"></p><output id="loop-display" class="clock-digits" aria-live="off"></output><div class="clock-actions"><button id="loop-stop" class="secondary">结束</button><button id="loop-pause" class="primary">暂停</button></div></div>
+    </div>
+    <div id="clock-watch" class="clock-panel" role="tabpanel" aria-labelledby="tab-watch" hidden><output id="watch-display" class="clock-digits" aria-live="off">00:00</output><div class="clock-actions"><button id="watch-reset" class="secondary">归零</button><button id="watch-toggle" class="primary">开始</button></div></div>
+   </div>
+   <div id="preferences-content" hidden>
+    <label class="setting-row" for="appearance"><span>房间时间</span><select id="appearance"><option value="auto">跟随本机时间</option><option value="day">白天</option><option value="night">夜晚</option><option value="late">深夜</option></select></label>
+    <label class="setting-row" for="weather"><span>窗外天气</span><select id="weather"><option value="auto">自动变化</option><option value="clear">晴</option><option value="rain">雨</option><option value="fog">雾</option></select></label>
+    <label class="setting-row" for="gravity-enabled"><span>启用重力系统</span><input id="gravity-enabled" type="checkbox"></label>
+    <p id="motion-status" class="field-help" role="status" hidden></p>
+    <label class="setting-row" for="auto-dismiss"><span>台词自动消失</span><input id="auto-dismiss" type="checkbox" checked></label>
+    <div class="font-setting"><label class="setting-row" for="font-size"><span>台词大小</span><output id="font-size-value" for="font-size">16</output></label><div class="font-slider"><span aria-hidden="true">字</span><input id="font-size" type="range" min="12" max="24" step="1" value="16"><span aria-hidden="true">字</span></div></div>
+    <p id="storage-note" class="field-help" role="status" hidden>当前浏览器无法保存房间设置。</p>
+   </div>
+  </section>
+ </div>
+ </div>
+</main>
+<div id="alarm-overlay" class="alarm-overlay" role="alertdialog" aria-modal="true" aria-labelledby="alarm-heading" tabindex="0" hidden><div id="alarm-card" class="alarm-card"><svg class="number-clock" viewBox="0 0 400 430" aria-hidden="true"><g class="clock-bells"><path d="M79 113c-31-35-4-77 27-72 18 3 33 14 43 25zM321 113c31-35 4-77-27-72-18 3-33 14-43 25z"/><path d="M193 40h14v24h-14z"/></g><circle class="clock-face" cx="200" cy="229" r="151"/><path class="clock-feet" d="m101 349-18 33m216-33 18 33"/><g class="clock-ticks"><path d="M200 95v13m134 121h-13M200 363v-13M66 229h13"/></g><text x="196" y="281" text-anchor="middle">99</text><path class="ring-marks" d="m39 66-16-17M18 93 1 86m360-20 16-17m5 44 17-7"/></svg><h2 id="alarm-heading">时间到了</h2></div></div>
+<noscript>请在 Safari 设置中开启 JavaScript，以显示角色并使用互动功能。</noscript>
+<script src="assets.js"></script><script src="mind.js"></script><script src="behavior.js"></script><script src="glass.js"></script><script src="room.js"></script><script src="physics.js"></script><script src="interaction.js"></script><script src="clock.js"></script><script src="alarm-sound.js"></script><script src="clock-ui.js"></script><script src="app.js"></script>
+</body>
+</html>
