@@ -49,3 +49,22 @@ html:fullscreen{width:100%;height:100%;background:var(--paper)}
 html:-webkit-full-screen{width:100%;height:100%;background:var(--paper)}
 
 .display-controls{position:absolute;left:max(17px,env(safe-area-inset-left));bottom:max(17px,env(safe-area-inset-bottom));z-index:11;max-width:calc(100% - 34px)}.display-controls .display-status{max-width:290px;padding:10px 12px;border-radius:10px;background:var(--surface);color:var(--ink);margin:0 0 8px}
+
+/* Shared room controls and stable sheet geometry. */
+.settings-controls{position:absolute;right:max(17px,env(safe-area-inset-right));bottom:max(17px,env(safe-area-inset-bottom));z-index:11}
+:is(.settings-controls,.display-controls) .icon-button{color:#52366c;background:#f7efff69}
+:is([data-period=night],[data-period=late]) :is(.settings-controls,.display-controls) .icon-button{color:#ead7f7;background:#39234e66}
+.clock-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;border:0;border-radius:12px;background:var(--soft);margin-bottom:16px}
+.clock-tabs button{min-width:0;min-height:44px;padding:8px 2px;border:0;border-radius:9px;font-size:14px;font-weight:500;line-height:1.4;-webkit-tap-highlight-color:transparent}
+.clock-tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:0 2px 5px #22113312}
+.clock-panel{height:240px;min-height:240px;overflow:auto;scrollbar-gutter:stable}
+.clock-panel>form,.clock-panel>#alarm-running,.clock-panel>#loop-running{height:100%;display:flex;flex-direction:column}
+.clock-panel .primary,.clock-panel .full-width,.clock-panel .clock-actions{margin-top:auto;flex-shrink:0}
+.clock-panel .clock-actions{padding-top:12px}
+.clock-panel .clock-actions button{margin:0;min-height:48px}
+.clock-panel .time-picker,.clock-panel .duration-pair{margin:auto 0}
+.clock-panel .clock-digits{margin:22px 0 12px;font-size:48px;line-height:1.3}
+#clock-watch:not([hidden]){display:flex;flex-direction:column}
+.sheet .primary,.sheet .secondary{min-height:48px;border-radius:10px;font-size:16px;line-height:1.4}
+.setting-row{min-height:60px}.setting-row select{border-radius:10px}
+.panels-viewport.is-short .clock-panel{height:210px;min-height:210px}

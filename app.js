@@ -31,7 +31,7 @@
       if(currentSheet==='preferences'){currentSheet=null;$('sheet-overlay').hidden=true;$('app-content').inert=false;document.body.classList.remove('sheet-open');}
       if($('alarm-overlay').hidden&&!currentSheet)$('open-timer').focus();
     }
-    focusLocked=locked;$('companion').classList.toggle('focus-active',locked);$('tank').inert=locked;$('rotate-view').disabled=locked;$('menu-toggle').disabled=locked;
+    focusLocked=locked;$('companion').classList.toggle('focus-active',locked);$('tank').inert=locked;$('rotate-view').disabled=locked;$('menu-toggle').disabled=locked;$('open-settings').disabled=locked;
     const blocked=!!currentSheet||!$('companion-menu').hidden||!$('alarm-overlay').hidden,paused=Date.now()<pausedUntil;
     const late=(state.theme==='auto'?RoomMotion.periodFor(new Date()):state.theme)==='late';
     const view=behavior.sync({late,autoSleep:true,blocked,paused,mutter:!locked,activityOverride:task});
