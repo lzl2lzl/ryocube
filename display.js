@@ -21,7 +21,10 @@
     render(){
       this.button.hidden=!this.supported&&!this.active;
       this.button.disabled=this.pending;
-      this.button.textContent=this.active?'退出全屏':'全屏显示';
+      const label=this.active?'退出全屏':'全屏显示';
+      this.button.querySelector('span').textContent=label;
+      this.button.setAttribute('aria-label',label);this.button.title=label;
+      this.button.querySelector('path').setAttribute('d',this.active?'M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5':'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5');
       this.installLink.hidden=this.standalone.matches||navigator.standalone===true;
     }
     sync(){

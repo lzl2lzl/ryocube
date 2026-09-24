@@ -56,10 +56,10 @@
         }
       }
       if(wasQuake&&!this.quake&&!this.dragging)this.returnAt=now;
-      if(this.quake||this.busy||Math.hypot(this.linear.x,this.linear.y,this.linear.z)>2.8||this.offsetChanged())this.wake();
+      if(this.quake||this.busy||Math.hypot(this.linear.x,this.linear.y,this.linear.z)>.18||this.offsetChanged())this.wake();
     }
     idleTarget(){
-      const x=this.enabled?this.tilt.x*Math.min(56,this.room.width*.12):0,y=this.enabled?this.tilt.y*Math.min(34,this.room.height*.06):0;
+      const x=this.enabled?this.tilt.x*Math.min(110,this.room.width*.28):0,y=this.enabled?this.tilt.y*Math.min(100,this.room.height*.18):0;
       return{x,y,z:0,tilt:clamp(x/7,-8,8)};
     }
     offsetChanged(){const target=this.idleTarget();return Object.keys(target).some(k=>Math.abs(target[k]-this.offset[k])>.2||Math.abs(this.velocity[k])>.2);}
@@ -88,19 +88,19 @@
       const p=this.room.position,w=this.room.width,h=this.room.height,idle=this.idleTarget();
       let target={...idle},spring=42,damping=13,force={x:0,y:0,z:0,tilt:0};
       const fresh=this.enabled&&now>=this.sensorUntil&&this.lastMotion!==undefined?Math.exp(-Math.max(0,now-this.lastMotion-80)/100):0;
-      const ax=deadZone(this.linear.x,2.8)*fresh,ay=deadZone(this.linear.y,2.8)*fresh,az=deadZone(this.linear.z,2.8)*fresh;
+      const ax=deadZone(this.linear.x,.18)*fresh,ay=deadZone(this.linear.y,.18)*fresh,az=deadZone(this.linear.z,.18)*fresh;
       if(this.dragging){target={...this.dragTarget};spring=190;damping=24;}
       else if(this.quake){
         spring=24-this.level*12;damping=7-this.level*2;
         target.y-=h*(.045+this.level*.19);target.tilt=clamp(-this.offset.x/w*35-this.velocity.x/w*10,-60,60);
         force={x:-ax*w*(.55+this.level*1.1),y:-ay*h*(.3+this.level*.6),z:-az*(90+this.level*100),tilt:0};
       }else{
-        force={x:-ax*w*.35,y:-ay*h*.2,z:-az*150,tilt:-ax*12};
+        force={x:-ax*w*.6,y:-ay*h*.35,z:-az*240,tilt:-ax*16};
         if(this.returnAt&&this.releaseTarget){const hold=Math.max(0,1-(now-this.returnAt)/450);for(const key of ['x','y','z','tilt'])target[key]+=(this.releaseTarget[key]-idle[key])*hold;}
       }
       if(this.reduce){for(const key of ['x','y','tilt']){target[key]*=.35;force[key]*=.35;}target.z=0;force.z=0;}
       for(const key of ['x','y','tilt','z']){this.velocity[key]+=((target[key]-this.offset[key])*spring+force[key])*dt;this.velocity[key]*=Math.exp(-damping*dt);this.offset[key]+=this.velocity[key]*dt;}
-      const bounds=this.busy?[['x',-w*.44-p.x,w*.44-p.x],['y',-h*.65-p.y,this.room.size*.2-p.y],['z',-this.room.depth*.7-p.z,145-p.z],['tilt',-85,85]]:[['x',-w*.2,w*.2],['y',-h*.12,h*.12],['z',-70,70],['tilt',-14,14]];
+      const bounds=this.busy?[['x',-w*.44-p.x,w*.44-p.x],['y',-h*.65-p.y,this.room.size*.2-p.y],['z',-this.room.depth*.7-p.z,145-p.z],['tilt',-85,85]]:[['x',-Math.min(110,w*.28),Math.min(110,w*.28)],['y',-Math.min(100,h*.18),Math.min(100,h*.18)],['z',-70,70],['tilt',-14,14]];
       for(const [key,min,max]of bounds){const value=clamp(this.offset[key],min,max);if(value!==this.offset[key]){this.offset[key]=value;this.velocity[key]*=-.28;}}
       this.room.setForceOffset(this.offset);$('tank').classList.toggle('is-quaking',this.quake);$('tank').style.setProperty('--rattle',`${(.5+this.level*1.5).toFixed(2)}px`);
       const distance=Math.max(...Object.keys(idle).map(k=>Math.abs(this.offset[k]-idle[k]))),speed=Math.max(...Object.values(this.velocity).map(Math.abs));

@@ -11,17 +11,17 @@
       if(this.lastSample!==null&&(now-this.lastSample>450||now<this.lastSample))this.reset();
       const dt=this.lastSample===null?0:clamp((now-this.lastSample)/1000,0,.1);this.lastSample=now;
       const magnitude=Math.hypot(vector.x,vector.y,vector.z),wasActive=this.active;
-      this.energy=this.energy*Math.exp(-dt/1.6)+clamp((magnitude-6)/12,0,1.5)*dt;
+      this.energy=this.energy*Math.exp(-dt/1.6)+clamp((magnitude-1.4)/5,0,1.5)*dt;
       if(now-this.lastStrong>500){this.started=null;this.turns=[];this.direction=null;this.active=false;}
-      if(magnitude>=9){
+      if(magnitude>=2.4){
         if(this.started===null)this.started=now;this.lastStrong=now;
         const direction={x:vector.x/magnitude,y:vector.y/magnitude,z:vector.z/magnitude};
         if(!this.direction)this.direction=direction;
         else if(direction.x*this.direction.x+direction.y*this.direction.y+direction.z*this.direction.z<-.4&&now-this.lastTurn>=90){this.turns.push(now);this.lastTurn=now;this.direction=direction;}
       }
       this.turns=this.turns.filter(t=>now-t<=1400);
-      this.active=this.started!==null&&now-this.started>=500&&this.turns.length>=(wasActive?2:3)&&now-this.lastTurn<=500&&this.energy>=(wasActive?.14:.25);
-      this.level=this.active?clamp((this.energy-.25)/.65,0,1):0;
+      this.active=this.started!==null&&now-this.started>=500&&this.turns.length>=(wasActive?2:3)&&now-this.lastTurn<=500&&this.energy>=(wasActive?.08:.14);
+      this.level=this.active?clamp((this.energy-.14)/.65,0,1):0;
       return{active:this.active,level:this.level,energy:this.energy};
     }
   }
@@ -46,7 +46,12 @@
         if(!this.neutral&&Math.hypot(linear.x,linear.y,linear.z)<3)this.neutral={...this.gravity};
       }
       const alpha=1-Math.exp(-dt/.065);for(const key of ['x','y','z'])this.linear[key]+=(clamp(linear[key],-40,40)-this.linear[key])*alpha;
-      const tilt=this.gravity&&this.neutral?{x:deadZone(-(this.gravity.x-this.neutral.x),1.2)/6,y:deadZone(this.gravity.y-this.neutral.y,1.2)/6}:{x:0,y:0};
+      let tilt={x:0,y:0};
+      if(this.gravity&&this.neutral){
+        const pitch=Math.atan2(this.gravity.y,this.gravity.z)-Math.atan2(this.neutral.y,this.neutral.z);
+        const wrapped=Math.atan2(Math.sin(pitch),Math.cos(pitch));
+        tilt={x:deadZone(-(this.gravity.x-this.neutral.x),.08)/2.5,y:deadZone(wrapped,.008)/.3};
+      }
       return{raw:linear,linear:{...this.linear},tilt:{x:clamp(tilt.x,-1,1),y:clamp(tilt.y,-1,1)}};
     }
   }

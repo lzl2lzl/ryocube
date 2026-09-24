@@ -51,6 +51,7 @@
     panels.style.setProperty('--panel-width',`${panelWidth}px`);panels.style.setProperty('--panel-height',`${panelHeight}px`);
     panels.classList.toggle('is-short',panelHeight<=400);panels.dataset.rotation=String(state.rotation*90);
     const card=$('alarm-card');card.style.width=`${panelWidth}px`;card.style.height=`${panelHeight}px`;card.style.setProperty('--room-angle',`${state.rotation*90}deg`);card.classList.toggle('is-landscape',panelWidth>panelHeight);
+    room.measure();
   }
   function renderSettings(){
     $('switch-form').textContent=state.fox?'变回人形':'变成狐狸';$('appearance').value=state.theme;$('weather').value=state.weather;
@@ -74,7 +75,7 @@
   function reactWith(pose){clearTimeout(reactionTimeout);state.reaction=true;state.reactionPose=pose;updateActivity();reactionTimeout=setTimeout(()=>{state.reaction=false;updateActivity();},data.config.reactionMs);}
   function closeMenu(restore=false){$('companion-menu').hidden=true;$('menu-backdrop').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');updateActivity();if(restore)$('menu-toggle').focus({preventScroll:true});}
   function openMenu(){if(currentSheet||focusLocked)return;$('companion-menu').hidden=false;$('menu-backdrop').hidden=false;$('menu-toggle').setAttribute('aria-expanded','true');updateActivity();$('switch-form').focus({preventScroll:true});}
-  new RoomDisplay({button:$('toggle-fullscreen'),installLink:$('install-app'),status:$('display-status'),onChange:()=>{closeMenu(true);interaction.reset();rotateLayout();requestAnimationFrame(rotateLayout);}});
+  new RoomDisplay({button:$('toggle-fullscreen'),installLink:$('install-app'),status:$('display-status'),onChange:()=>{closeMenu();interaction.reset();rotateLayout();requestAnimationFrame(rotateLayout);$('toggle-fullscreen').focus({preventScroll:true});}});
   function openSheet(kind){
     if(focusLocked&&kind!=='timer')return;
     closeMenu();previousFocus=document.activeElement;currentSheet=kind;

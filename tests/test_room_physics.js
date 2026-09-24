@@ -2,12 +2,12 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {ShakeGate,MotionFilter,SwipeGesture,rotate,preferences}=require('../physics.js');
 function shake(gate,from,to,strength=18,step=20,axis='x'){let result;for(let t=from;t<=to;t+=step){const a={x:0,y:0,z:0};a[axis]=Math.sin(t/100)*strength;result=gate.sample(a,t);}return result;}
 test('hand tremor, walking-like motion, a single shove and braking do not lift the actor',()=>{
- for(const strength of [1,4,7]){const g=new ShakeGate();assert(!shake(g,0,15000,strength).active);}
+ for(const strength of [.1,.6,1.4]){const g=new ShakeGate();assert(!shake(g,0,15000,strength).active);}
  const g=new ShakeGate();for(let t=0;t<5000;t+=20)assert(!g.sample({x:t<250?25:t<500?-25:0,y:0,z:0},t).active);
  g.reset();for(let t=0;t<10000;t+=20)assert(!g.sample({x:20,y:0,z:0},t).active);
 });
 test('deliberate repeated reversals trigger before five seconds and build flight intensity',()=>{
- const g=new ShakeGate();assert(!shake(g,0,500).active);const first=shake(g,520,1300);assert(first.active);assert(first.level<.5);
+ const g=new ShakeGate();assert(!shake(g,0,500,4).active);const first=shake(g,520,1300,4);assert(first.active);assert(first.level<.5);
  const later=shake(g,1320,4500,22);assert(later.active&&later.level>.8);assert(later.level<=1);
 });
 test('front-back shaking and different sampling rates use the same intent rule',()=>{
@@ -50,3 +50,5 @@ test('gravity starts off including old saved-on choices; dialogue preferences st
  assert.deepEqual(preferences({}),{gravity:false,autoDismiss:true});assert.equal(preferences({keepBubble:true}).autoDismiss,false);assert.equal(preferences({keepBubble:false}).autoDismiss,true);
  assert.equal(preferences({gravity:true}).gravity,false);assert.deepEqual(preferences({gravity:false,autoDismiss:true,keepBubble:true}),{gravity:false,autoDismiss:true});
 });
+
+test("small tilt responds in both axes without linear acceleration",()=>{const f=new MotionFilter(),zero={x:0,y:0,z:0};f.sample(zero,{x:0,y:9.8,z:0},0);let sample;for(let t=20;t<800;t+=20)sample=f.sample(zero,{x:-.6,y:9.76,z:.85},t);assert(sample.tilt.x>.15);assert(Math.abs(sample.tilt.y)>.2);assert.deepEqual(sample.linear,zero);});

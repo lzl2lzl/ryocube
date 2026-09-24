@@ -191,8 +191,20 @@
     renderPosition(now=performance.now()){
       const p=this.position,f=this.forceOffset,walking=this.walking&&!this.interaction.active;
       const bob=walking&&!this.options.reduce?Math.sin(now/115)*2:0,lean=(p.tilt||0)+f.tilt+(walking?Math.sin(now/220)*1.4:0);
-      $('actor').style.transform=`translateX(-50%) translate3d(${(p.x+f.x).toFixed(2)}px,${(p.y+f.y+bob).toFixed(2)}px,${(p.z+f.z).toFixed(2)}px) rotateY(${p.turn.toFixed(2)}deg) rotateZ(${lean.toFixed(2)}deg)`;
-      $('actor-shadow').style.transform=`translateX(-50%) translate3d(${(p.x+f.x).toFixed(2)}px,0,${p.z.toFixed(2)}px)`;
+      const clamp=RoomPhysics.clamp,w=this.width,h=this.height,s=this.size;
+      // Keep an opaque central part of the sprite inside the window, after
+      // rotation around its feet and perspective. Logical travel stays intact.
+      let x=p.x+f.x,y=p.y+f.y+bob,z=clamp(p.z+f.z,-this.depth*.9,145);
+      const a=lean*Math.PI/180,b=p.turn*Math.PI/180,origin=this.options.sleeping?.58:1;
+      const cy=s*(.5-origin),rx=-cy*Math.sin(a),ry=cy*Math.cos(a),rz=-rx*Math.sin(b);
+      // Tank and actor stage both apply 850px perspective. Their combined
+      // projection is 425px; this is also conservative when a browser flattens one.
+      const scale=425/(425-z-rz),baseY=h*.97-s*(1-origin);
+      const px=w/2+(x+rx*Math.cos(b))*scale,py=h*.43+(baseY+y+ry-h*.43)*scale;
+      const margin=Math.min(64,s*.16,w*.24,h*.24);
+      x+=(clamp(px,margin,w-margin)-px)/scale;y+=(clamp(py,margin,h-margin)-py)/scale;
+      $('actor').style.transform=`translateX(-50%) translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,${z.toFixed(2)}px) rotateY(${p.turn.toFixed(2)}deg) rotateZ(${lean.toFixed(2)}deg)`;
+      $('actor-shadow').style.transform=`translateX(-50%) translate3d(${x.toFixed(2)}px,0,${z.toFixed(2)}px)`;
       $('actor-shadow').style.opacity=String(Math.max(.1,1-Math.abs(p.y+f.y)/this.height));
     }
     render(now=performance.now()) {
