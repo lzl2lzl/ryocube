@@ -99,3 +99,14 @@ test('swipes and shaking add anger without counting as taps or rerolling activit
   f.behavior.sync({activityOverride:'screen'});const anger=f.behavior.mind.anger;assert.equal(f.behavior.disturb('shake'),false);assert.equal(f.behavior.mind.anger,anger);
   f.behavior.sync({activityOverride:null,late:true});assert.equal(f.behavior.disturb('swipe'),false);assert.equal(f.behavior.view.sleeping,true);
 });
+
+test('anger never changes form; only unattended roaming can choose fox',()=>{
+  const f=fixture(15);
+  f.behavior.config.moodMap.rage.toFox=true; // Ignore legacy transformation flags too.
+  for(const anger of [0,35,70,120]){
+    f.behavior.input();f.behavior.mind.debugSetAnger(anger);
+    assert.equal(f.behavior.sync().autoFox,false);
+  }
+  assert.equal(f.advance(600000).autoFox,true);
+  f.behavior.input();assert.equal(f.behavior.sync().autoFox,false);
+});

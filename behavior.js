@@ -63,7 +63,7 @@
       if(!roaming)this.roamFox=false;
       const map=this.config.moodMap[ambient]||{state:'idle'};
       this.view={key:sleeping?'sleep':roaming?'roam':ambient,ambient,pose:sleeping?'sleep':map.state,
-        sleeping,roaming,autoFox:!!(map.toFox||this.roamFox),singStroll:this.singStroll,
+        sleeping,roaming,autoFox:!!this.roamFox,singStroll:this.singStroll,
         movement:sleeping?'still':roaming?'roam':ambient==='walk'||(ambient==='sing'&&this.singStroll)?'pace':'still',
         anger:snapshot.anger.value,tier:snapshot.anger.tier,schedule:snapshot.activity?.activity||null};
       if(previous&&!sleeping&&!roaming&&override!=='screen'){
