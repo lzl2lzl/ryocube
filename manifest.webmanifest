@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "霸道了了在房间",
+  "short_name": "霸道了了在房间",
+  "description": "给用 iPad 画画的亲友做的轻量陪伴网页",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e7dfed",
+  "theme_color": "#d8cce6",
+  "icons": [
+    { "src": "icons/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

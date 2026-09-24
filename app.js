@@ -74,6 +74,7 @@
   function reactWith(pose){clearTimeout(reactionTimeout);state.reaction=true;state.reactionPose=pose;updateActivity();reactionTimeout=setTimeout(()=>{state.reaction=false;updateActivity();},data.config.reactionMs);}
   function closeMenu(restore=false){$('companion-menu').hidden=true;$('menu-backdrop').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');updateActivity();if(restore)$('menu-toggle').focus({preventScroll:true});}
   function openMenu(){if(currentSheet||focusLocked)return;$('companion-menu').hidden=false;$('menu-backdrop').hidden=false;$('menu-toggle').setAttribute('aria-expanded','true');updateActivity();$('switch-form').focus({preventScroll:true});}
+  new RoomDisplay({button:$('toggle-fullscreen'),installLink:$('install-app'),status:$('display-status'),onChange:()=>{closeMenu(true);interaction.reset();rotateLayout();requestAnimationFrame(rotateLayout);}});
   function openSheet(kind){
     if(focusLocked&&kind!=='timer')return;
     closeMenu();previousFocus=document.activeElement;currentSheet=kind;
@@ -108,7 +109,7 @@
   new ResizeObserver(rotateLayout).observe($('app-content'));
   $('switch-form').addEventListener('click',()=>{state.fox=!state.fox;closeMenu(true);renderSettings();});
   $('sleep-toggle').addEventListener('click',()=>{closeMenu(true);behavior.toggleSleep();state.reaction=false;renderSettings();});
-  $('open-guide').addEventListener('click',()=>closeMenu());$('open-settings').addEventListener('click',()=>openSheet('preferences'));
+  $('open-guide').addEventListener('click',()=>closeMenu());$('install-app').addEventListener('click',()=>closeMenu());$('open-settings').addEventListener('click',()=>openSheet('preferences'));
   $('open-timer').addEventListener('click',()=>openSheet('timer'));$('close-sheet').addEventListener('click',closeSheet);
   document.querySelector('.sheet-backdrop').addEventListener('click',closeSheet);
   $('appearance').addEventListener('change',()=>{state.theme=$('appearance').value;renderSettings();});

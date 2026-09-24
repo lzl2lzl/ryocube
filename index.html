@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#d8cce6"><meta name="description" content="霸道了了在房间：隔着窗户，看他在紫色房间里寻找出口。"><meta name="application-name" content="霸道了了在房间"><meta name="apple-mobile-web-app-title" content="霸道了了在房间"><meta property="og:title" content="霸道了了在房间">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" sizes="512x512" href="icons/app-icon.png">
 <title>霸道了了在房间</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,7 +39,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
  </div>
  <div id="panels-viewport" class="panels-viewport">
  <button id="menu-backdrop" class="menu-backdrop" type="button" tabindex="-1" aria-label="关闭菜单" hidden></button>
- <div id="companion-menu" class="companion-menu" hidden><button id="switch-form">变成狐狸</button><button id="sleep-toggle">哄他睡觉</button><button id="open-settings">房间设置</button><a id="open-guide" href="guide.html" target="_blank" rel="noopener noreferrer" aria-label="使用指南，在新标签页打开"><span>使用指南</span><span class="external-link-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"></path></svg></span></a></div>
+ <div id="companion-menu" class="companion-menu" hidden><button id="switch-form">变成狐狸</button><button id="sleep-toggle">哄他睡觉</button><button id="open-settings">房间设置</button><button id="toggle-fullscreen" type="button" hidden>全屏显示</button><p id="display-status" class="field-help display-status" role="status" hidden></p><a id="install-app" href="guide.html#home-screen" target="_blank" rel="noopener noreferrer" aria-label="添加到主屏幕，打开操作说明"><span>添加到主屏幕</span><span class="external-link-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"></path></svg></span></a><a id="open-guide" href="guide.html" target="_blank" rel="noopener noreferrer" aria-label="使用指南，在新标签页打开"><span>使用指南</span><span class="external-link-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"></path></svg></span></a></div>
  <div id="sheet-overlay" class="sheet-overlay" hidden><div class="sheet-backdrop" aria-hidden="true"></div>
   <section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">
    <header class="sheet-header"><h2 id="sheet-title">闹铃</h2><button id="close-sheet" class="icon-button" aria-label="关闭设置">×</button></header>
@@ -68,6 +70,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </main>
 <div id="alarm-overlay" class="alarm-overlay" role="alertdialog" aria-modal="true" aria-labelledby="alarm-heading" tabindex="0" hidden><div id="alarm-card" class="alarm-card"><svg class="number-clock" viewBox="0 0 400 430" aria-hidden="true"><g class="clock-bells"><path d="M79 113c-31-35-4-77 27-72 18 3 33 14 43 25zM321 113c31-35 4-77-27-72-18 3-33 14-43 25z"/><path d="M193 40h14v24h-14z"/></g><circle class="clock-face" cx="200" cy="229" r="151"/><path class="clock-feet" d="m101 349-18 33m216-33 18 33"/><g class="clock-ticks"><path d="M200 95v13m134 121h-13M200 363v-13M66 229h13"/></g><text x="196" y="281" text-anchor="middle">99</text><path class="ring-marks" d="m39 66-16-17M18 93 1 86m360-20 16-17m5 44 17-7"/></svg><h2 id="alarm-heading">时间到了</h2></div></div>
 <noscript>请在 Safari 设置中开启 JavaScript，以显示角色并使用互动功能。</noscript>
-<script src="assets.js"></script><script src="mind.js"></script><script src="behavior.js"></script><script src="glass.js"></script><script src="room.js"></script><script src="physics.js"></script><script src="interaction.js"></script><script src="clock.js"></script><script src="alarm-sound.js"></script><script src="clock-ui.js"></script><script src="app.js"></script>
+<script src="assets.js"></script><script src="mind.js"></script><script src="behavior.js"></script><script src="glass.js"></script><script src="room.js"></script><script src="physics.js"></script><script src="interaction.js"></script><script src="clock.js"></script><script src="alarm-sound.js"></script><script src="clock-ui.js"></script><script src="display.js"></script><script src="app.js"></script>
 </body>
 </html>

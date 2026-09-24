@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
 const read = async name => (await readFile(new URL(name, root), 'utf8')).replace(/\r\n/g, '\n');
@@ -17,4 +17,7 @@ if (/<script src=|<link rel="stylesheet"/.test(html)) {
 await mkdir(new URL('publish/', root), { recursive: true });
 await writeFile(new URL('publish/index.html', root), html, 'utf8');
 await writeFile(new URL('publish/guide.html', root), await read('guide.html'), 'utf8');
-console.log('已生成 publish/index.html 和 publish/guide.html。');
+await copyFile(new URL('manifest.webmanifest', root), new URL('publish/manifest.webmanifest', root));
+await mkdir(new URL('publish/icons/', root), { recursive: true });
+await copyFile(new URL('icons/app-icon.png', root), new URL('publish/icons/app-icon.png', root));
+console.log('已生成房间、使用指南和主屏幕应用资源。');
