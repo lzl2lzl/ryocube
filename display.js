@@ -1,14 +1,12 @@
 (() => {
   'use strict';
   window.RoomDisplay = class {
-    constructor({button, installLink, status, onChange}) {
-      this.button=button;this.installLink=installLink;this.status=status;this.onChange=onChange;
+    constructor({button, status, onChange}) {
+      this.button=button;this.status=status;this.onChange=onChange;
       this.pending=false;this.lastActive=this.active;this.timer=null;
-      this.standalone=matchMedia('(display-mode: standalone)');
       button.addEventListener('click',()=>this.toggle());
       for(const name of ['fullscreenchange','webkitfullscreenchange']) document.addEventListener(name,()=>this.sync());
       for(const name of ['fullscreenerror','webkitfullscreenerror']) document.addEventListener(name,()=>{if(this.pending)this.fail();});
-      this.standalone.addEventListener?.('change',()=>this.render());
       window.addEventListener('pageshow',()=>this.sync());
       this.render();
     }
@@ -22,10 +20,8 @@
       this.button.hidden=!this.supported&&!this.active;
       this.button.disabled=this.pending;
       const label=this.active?'退出全屏':'全屏显示';
-      this.button.querySelector('span').textContent=label;
       this.button.setAttribute('aria-label',label);this.button.title=label;
       this.button.querySelector('path').setAttribute('d',this.active?'M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5':'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5');
-      this.installLink.hidden=this.standalone.matches||navigator.standalone===true;
     }
     sync(){
       const active=this.active,changed=active!==this.lastActive;
