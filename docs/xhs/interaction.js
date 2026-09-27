@@ -223,19 +223,26 @@ var __spreadValues = (a, b) => {
           this.onGestureMove();
           return;
         }
-        this.stroke = event.target.closest("#character") && this.canInteract() ? {x:event.clientX,y:event.clientY,at:performance.now(),id:event.pointerId} : null;
+        const rect=$("character").getBoundingClientRect(),local=rotate(event.clientX-rect.left-rect.width/2,event.clientY-rect.top-rect.height/2,-this.angle);
+        const localHeight=this.angle%180?rect.width:rect.height;
+        const head=event.target.closest("#character") && local.y<localHeight*.13;
+        this.stroke = head && this.canInteract() ? {x:event.clientX,y:event.clientY,id:event.pointerId,axis:null,anchor:0,peak:0,direction:0,counted:false,moved:false} : null;
         this.gesture.start(event.clientX, event.clientY, event.pointerId, performance.now());
       }, { capture: true });
       tank.addEventListener("pointermove", (event) => {
         if(this.stroke && this.stroke.id===event.pointerId){
-          const distance=Math.hypot(event.clientX-this.stroke.x,event.clientY-this.stroke.y),elapsed=performance.now()-this.stroke.at;
-          if(distance>8)this.onGestureMove();
-          if(distance<=140 && (distance<20 || distance/Math.max(1,elapsed)<0.35)){
-            this.gesture.move(event.clientX,event.clientY,event.pointerId,performance.now());
-            if(distance>8&&!tank.hasPointerCapture(event.pointerId))tank.setPointerCapture(event.pointerId);
-            return;
+          const st=this.stroke,dx=event.clientX-st.x,dy=event.clientY-st.y;
+          if(!st.axis && Math.hypot(dx,dy)>=8){st.axis=Math.abs(dx)>=Math.abs(dy)?'x':'y';st.moved=true;this.onGestureMove();}
+          if(st.axis){
+            const v=st.axis==='x'?dx:dy;
+            if(!tank.hasPointerCapture(event.pointerId))tank.setPointerCapture(event.pointerId);
+            if(!st.direction)st.direction=v>=0?1:-1;
+            if((v-st.peak)*st.direction>0)st.peak=v;
+            if((st.peak-v)*st.direction>=10){st.anchor=st.peak;st.direction*=-1;st.peak=v;st.counted=false;}
+            if(!st.counted && Math.abs(v-st.anchor)>=28){st.counted=true;if(this.canInteract())this.onStroke();}
+            this.suppressUntil=performance.now()+800;
           }
-          this.stroke=null;
+          return;
         }
         if (this.gesture.move(event.clientX, event.clientY, event.pointerId, performance.now())) {
           this.onGestureMove();
@@ -247,10 +254,8 @@ var __spreadValues = (a, b) => {
         this.pointers.delete(event.pointerId);
         const stroke=this.stroke;this.stroke=null;
         if(stroke&&stroke.id===event.pointerId){
-          const elapsed=performance.now()-stroke.at,distance=Math.hypot(event.clientX-stroke.x,event.clientY-stroke.y);
-          if(elapsed>=350&&elapsed<=2200&&distance>=24&&distance<=140&&distance/elapsed<0.35&&this.canInteract()){
-            this.gesture.cancel();this.suppressUntil=performance.now()+800;this.onGestureMove();this.onStroke();return;
-          }
+          this.gesture.cancel();this.suppressUntil=performance.now()+800;this.onGestureMove();
+          if(!stroke.moved&&this.canTap())this.onTap();return;
         }
         const result = this.gesture.end(event.clientX, event.clientY, event.pointerId, performance.now());
         if (!result) return;
