@@ -94,3 +94,13 @@ html:-webkit-full-screen{width:100%;height:100%;background:var(--paper)}
 .panels-viewport .companion-menu{top:auto;bottom:76px;right:18px;max-height:calc(var(--panel-height) - 100px)}
 
 .actor #sprite.soothed{animation:soothe-touch 900ms ease-in-out}@keyframes soothe-touch{0%,100%{transform:rotate(0deg)}40%{transform:rotate(-3deg) translateY(3px)}70%{transform:rotate(2deg)}}
+
+/* A compact, evenly spaced bottom control group. */
+.room-controls{left:50%;right:auto;bottom:18px;bottom:calc(18px + var(--safe-area-inset-bottom,0px));width:224px;height:56px;transform:translateX(-50%);padding:6px;justify-content:flex-start;border-radius:28px;background:#f7efff80;box-shadow:0 4px 18px #2815351a;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.controls-right{width:auto;justify-content:flex-start;margin-left:12px}
+.controls-right>*+*{margin-left:12px}
+.room-controls .icon-button,.settings-controls .icon-button{background:transparent}
+.settings-controls{right:auto;left:calc(50% + 62px);bottom:24px;bottom:calc(24px + var(--safe-area-inset-bottom,0px))}
+[data-period=night] .room-controls,[data-period=late] .room-controls{background:#39234eaa}
+[data-period=night] .room-controls .icon-button,[data-period=late] .room-controls .icon-button,[data-period=night] .settings-controls .icon-button,[data-period=late] .settings-controls .icon-button{background:transparent;color:#ead7f7}
+.room-controls .icon-button:active,.settings-controls .icon-button:active{background:#b99ace40}
