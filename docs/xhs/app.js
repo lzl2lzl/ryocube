@@ -176,11 +176,10 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     room.measure();
   }
   function renderSettings() {
-    $("switch-form").textContent = state.fox ? "变回人形" : "变成狐狸";
     $("appearance").value = state.theme;
     $("weather").value = state.weather;
     $("auto-dismiss").checked = state.autoDismiss;
-    $("character").setAttribute("aria-label", "".concat(state.fox ? "狐狸形态的角色" : "框里的角色", "，点按敲窗，长按设置"));
+    $("character").setAttribute("aria-label", "".concat(state.fox ? "狐狸形态的角色" : "框里的角色", "，点按敲窗，摸头哄睡"));
     renderFontSize();
     rotateLayout();
     updateActivity();
@@ -337,20 +336,10 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       knock();
     }
   });
-  $("character").addEventListener("contextmenu", (event) => {
-    event.preventDefault();
-    openMenu();
+  $("menu-toggle").addEventListener("click", () => {
+    if(focusLocked)return;
+    $("guide-view").hidden=false;$("companion").inert=true;
   });
-  $("character").addEventListener("pointerdown", (event) => {
-    if (event.button !== 0 || focusLocked) return;
-    longPressed = false;
-    longPressTimeout = setTimeout(() => {
-      longPressed = true;
-      openMenu();
-    }, 600);
-  });
-  ["pointerup", "pointercancel", "pointerleave"].forEach((name) => $("character").addEventListener(name, () => clearTimeout(longPressTimeout)));
-  $("menu-toggle").addEventListener("click", () => $("companion-menu").hidden ? openMenu() : closeMenu(true));
   $("menu-backdrop").addEventListener("click", () => closeMenu(true));
   $("rotate-view").addEventListener("click", () => {
     if (focusLocked) return;
@@ -361,16 +350,6 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     persist();
   });
   new ResizeObserver(rotateLayout).observe($("app-content"));
-  $("switch-form").addEventListener("click", () => {
-    state.fox = !state.fox;
-    closeMenu(true);
-    renderSettings();
-  });
-  $("open-guide").addEventListener("click", () => {
-    closeMenu();
-    $("guide-view").hidden = false;
-    $("companion").inert = true;
-  });
   $("guide-back").addEventListener("click", () => {
     $("guide-view").hidden = true;
     $("companion").inert = false;
