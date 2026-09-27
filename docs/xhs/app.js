@@ -336,8 +336,8 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       knock();
     }
   });
-  $("menu-toggle").addEventListener("click", () => {
-    if(focusLocked)return;
+  $("menu-toggle").addEventListener("click", (event) => {
+    if(focusLocked){event.preventDefault();return;}
 
   });
   $("menu-backdrop").addEventListener("click", () => closeMenu(true));
