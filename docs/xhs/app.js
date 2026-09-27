@@ -264,8 +264,18 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (previousFocus && !previousFocus.disabled && !previousFocus.closest("[hidden],[inert]")) previousFocus.focus();
     else $("open-timer").focus();
   }
+  let formTaps=[];
   function knock() {
     if (focusLocked) return;
+    const tapTime=Date.now();
+    if(formTaps.length && tapTime-formTaps[formTaps.length-1]>450)formTaps=[];
+    formTaps=formTaps.filter(at=>tapTime-at<=3000);formTaps.push(tapTime);
+    if(formTaps.length>=9){
+      const wasFox=state.fox||!!behavior.view.autoFox;
+      formTaps=[];strokes=0;knocks=[];recordInput();state.fox=!wasFox;
+      clearTimeout(reactionTimeout);state.reaction=false;interaction.reset();renderSettings();
+      showText(state.fox?'……这样总行了吧。':'好了，变回来了。');return;
+    }
     recordInput();
     const now = Date.now();
     knocks = knocks.filter((at) => now - at < 3e3);
@@ -292,6 +302,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   }
   let strokes=0,lastStroke=0;
   function soothe(){
+    formTaps=[];
     if(focusLocked||behavior.view.sleeping)return;
     const now=Date.now();if(now-lastStroke>20000)strokes=0;lastStroke=now;strokes++;
     recordInput();clearTimeout(longPressTimeout);clearTimeout(reactionTimeout);
