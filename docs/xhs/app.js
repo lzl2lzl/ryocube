@@ -37,6 +37,8 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     reactionPose: "angry"
   });
   let bubbleTimeout, reactionTimeout, longPressTimeout, resumeTimer, previousFocus, alarmFocus, currentSheet = null, longPressed = false, pausedUntil = 0, knocks = [], focusLocked = false, clock, interaction;
+  const tapSequence=new CubeGestures.TapSequence();
+  let tapCommitTimer,strokes=0,lastStroke=0,sootheTimer,soothePlaying=false,sootheQueue=[];
   const prefersReduced = matchMedia("(prefers-reduced-motion: reduce)"), data = window.YUE_DATA;
   const behavior = new RoomBehavior({ config: data.config, dialogue: data.dialogue, persisted: saved.mind || {}, idleMinutes: 1 });
   const room = new RoomMotion(data, () => {
@@ -45,12 +47,19 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     return pose;
   });
   interaction = new RoomInteraction(room, {
-    canTap: () => !focusLocked && !currentSheet && $("companion-menu").hidden && $("alarm-overlay").hidden,
+    canTap: () => !document.hidden && $("guide-view").hidden && !focusLocked && !currentSheet && $("companion-menu").hidden && $("alarm-overlay").hidden,
     canInteract: () => {
       var _a;
-      return !focusLocked && !currentSheet && $("companion-menu").hidden && $("alarm-overlay").hidden && !((_a = behavior.view) == null ? void 0 : _a.sleeping);
+      return !document.hidden && $("guide-view").hidden && !focusLocked && !currentSheet && $("companion-menu").hidden && $("alarm-overlay").hidden && !((_a = behavior.view) == null ? void 0 : _a.sleeping);
     },
     onStroke: soothe,
+    onGestureStart: kind=>{
+      clearTapSequence();
+      if(kind==='pet'&&!soothePlaying){
+        clearTimeout(reactionTimeout);state.reaction=true;state.reactionPose='idle';updateActivity();
+        reactionTimeout=setTimeout(()=>{if(!soothePlaying){state.reaction=false;updateActivity();}},1200);
+      }else if(kind!=='pet'){stopSoothe(kind==='drag');updateActivity();}
+    },
     onTap: () => {
       if (!longPressed) knock();
       longPressed = false;
@@ -66,6 +75,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     }
   });
   clock = new RoomClockUI({ onRing: (text) => {
+    interruptGestures();
     room.glance();
     if ($("alarm-overlay").hidden) alarmFocus = document.activeElement;
     $("alarm-heading").textContent = text;
@@ -100,6 +110,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   function updateActivity() {
     const loop = clock == null ? void 0 : clock.model.loopView(), task = loop && !loop.paused ? loop.phase === "focus" ? "screen" : "sing" : null, locked = task === "screen";
     if (locked && !focusLocked) {
+      interruptGestures(true);
       clearTimeout(reactionTimeout);
       clearTimeout(longPressTimeout);
       clearTimeout(resumeTimer);
@@ -127,7 +138,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     $("rotate-view").disabled = locked;
     $("menu-toggle").disabled = locked;
     $("open-settings").disabled = locked;
-    const blocked = !!currentSheet || !$("companion-menu").hidden || !$("alarm-overlay").hidden, paused = Date.now() < pausedUntil;
+    const blocked = !$("guide-view").hidden || !!currentSheet || !$("companion-menu").hidden || !$("alarm-overlay").hidden, paused = Date.now() < pausedUntil;
     const late = (state.theme === "auto" ? RoomMotion.periodFor(/* @__PURE__ */ new Date()) : state.theme) === "late";
     const view = behavior.sync({ late, autoSleep: true, blocked, paused, mutter: !locked, activityOverride: task });
     interaction == null ? void 0 : interaction.setContext({ enabled: state.gravity, blocked: blocked || locked || view.sleeping, angle: state.rotation * 90, reduce: prefersReduced.matches });
@@ -211,7 +222,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     scheduleBubbleDismiss();
   }
   function flushSpeech() {
-    for (const event of behavior.drain()) if (event.type === "speech") showText(event.text);
+    for (const event of behavior.drain()) if (event.type === "speech" && !soothePlaying) showText(event.text);
   }
   function reactWith(pose) {
     clearTimeout(reactionTimeout);
@@ -230,16 +241,9 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     updateActivity();
     if (restore) $("menu-toggle").focus({ preventScroll: true });
   }
-  function openMenu() {
-    if (currentSheet || focusLocked) return;
-    $("companion-menu").hidden = false;
-    $("menu-backdrop").hidden = false;
-    $("menu-toggle").setAttribute("aria-expanded", "true");
-    updateActivity();
-    $("switch-form").focus({ preventScroll: true });
-  }
   function openSheet(kind) {
     if (focusLocked && kind !== "timer") return;
+    interruptGestures();
     closeMenu();
     previousFocus = document.activeElement;
     currentSheet = kind;
@@ -263,56 +267,75 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (previousFocus && !previousFocus.disabled && !previousFocus.closest("[hidden],[inert]")) previousFocus.focus();
     else $("open-timer").focus();
   }
-  let formTaps=[];
+  function clearTapSequence(){
+    tapSequence.reset();knocks=[];clearTimeout(tapCommitTimer);behavior.wakeClicks=[];
+  }
+  function stopSoothe(resetProgress=false){
+    clearTimeout(sootheTimer);sootheQueue=[];
+    if(soothePlaying){clearTimeout(reactionTimeout);state.reaction=false;}
+    soothePlaying=false;$('sprite').classList.remove('soothed');
+    if(resetProgress){strokes=0;lastStroke=0;}else strokes=Math.min(strokes,8);
+  }
+  function interruptGestures(resetPet=false){
+    clearTapSequence();stopSoothe(resetPet);
+    if(interaction)interaction.reset();
+  }
   function knock() {
-    if (focusLocked) return;
-    const tapTime=Date.now();
-    if(formTaps.length && tapTime-formTaps[formTaps.length-1]>450)formTaps=[];
-    formTaps=formTaps.filter(at=>tapTime-at<=3000);formTaps.push(tapTime);
-    if(formTaps.length>=9){
+    if(focusLocked||currentSheet||!$('guide-view').hidden||!$('alarm-overlay').hidden||document.hidden)return;
+    const tapTime=Date.now(),decision=tapSequence.push(tapTime,behavior.view.sleeping);
+    if(decision.kind==='wake-tail')return;
+    stopSoothe(true);
+    if(decision.kind==='wake'){
+      clearTimeout(tapCommitTimer);knocks=[];room.glance();behavior.poke();updateActivity();persist();return;
+    }
+    if(decision.kind==='transform'){
       const wasFox=state.fox||!!behavior.view.autoFox;
-      formTaps=[];strokes=0;knocks=[];recordInput();state.fox=!wasFox;
+      clearTimeout(tapCommitTimer);clearTimeout(resumeTimer);pausedUntil=0;knocks=[];
+      recordInput();state.fox=!wasFox;behavior.clickTimes=[];
       clearTimeout(reactionTimeout);state.reaction=false;interaction.reset();renderSettings();
       showText(state.fox?'……这样总行了吧。':'好了，变回来了。');return;
     }
     recordInput();
-    const now = Date.now();
-    knocks = knocks.filter((at) => now - at < 3e3);
-    knocks.push(now);
-    if (knocks.length >= 3) {
-      pausedUntil = now + 6e4;
-      knocks = [];
-    } else if (pausedUntil > now) pausedUntil = now + 6e4;
-    clearTimeout(resumeTimer);
-    if (pausedUntil > now) resumeTimer = setTimeout(() => {
-      pausedUntil = 0;
-      updateActivity();
-    }, pausedUntil - now);
-    room.glance();
-    const result = behavior.poke();
-    updateActivity();
-    if (result.action === "light") {
-      clearTimeout(bubbleTimeout);
-      $("bubble").textContent = "";
-    }
-    if (result.action === "dodge") room.dodge();
-    if (result.pose) reactWith(result.pose);
+    knocks=knocks.filter(at=>tapTime-at<3000);knocks.push(tapTime);
+    clearTimeout(tapCommitTimer);
+    if(knocks.length>=3)tapCommitTimer=setTimeout(()=>{
+      knocks=[];pausedUntil=Date.now()+60000;clearTimeout(resumeTimer);
+      resumeTimer=setTimeout(()=>{pausedUntil=0;updateActivity();},60000);updateActivity();
+    },470);
+    room.glance();const result=behavior.poke();updateActivity();
+    if(result.action==='light'){clearTimeout(bubbleTimeout);$('bubble').textContent='';}
+    if(result.action==='dodge')room.dodge();
+    if(result.pose)reactWith(result.pose);
     persist();
   }
-  let strokes=0,lastStroke=0;
-  function soothe(){
-    formTaps=[];
-    if(focusLocked||behavior.view.sleeping)return;
-    const now=Date.now();if(now-lastStroke>20000)strokes=0;lastStroke=now;strokes++;
-    recordInput();clearTimeout(longPressTimeout);clearTimeout(reactionTimeout);
-    if(strokes>=9){
-      strokes=0;state.reaction=false;behavior.toggleSleep();behavior.drain();updateActivity();showText("……只睡一小会儿。");persist();return;
+  function playSoothe(){
+    if(!sootheQueue.length){soothePlaying=false;state.reaction=false;updateActivity();return;}
+    if(focusLocked||currentSheet||!$('guide-view').hidden||!$('alarm-overlay').hidden||document.hidden){stopSoothe();return;}
+    const stage=sootheQueue.shift();soothePlaying=true;clearTimeout(reactionTimeout);
+    if(stage.count===9){
+      strokes=0;lastStroke=0;state.reaction=false;
+      if(!behavior.view.sleeping)behavior.toggleSleep();
+      behavior.drain();updateActivity();showText(stage.text);persist();
+    }else{
+      state.reaction=true;state.reactionPose=stage.pose;updateActivity();showText(stage.text);
     }
-    const lines={1:"……你在摸哪里？",3:"唔……有点困了。",5:"你让我睡觉我就睡觉吗？",7:"……再摸一下也不是不行。",8:"我才……没有……困……"};
-    reactWith(strokes===5||strokes===6?'angry':'idle');
-    clearTimeout(reactionTimeout);reactionTimeout=setTimeout(()=>{state.reaction=false;updateActivity();},4500);
-    const sprite=$("sprite");sprite.classList.remove('soothed');void sprite.offsetWidth;sprite.classList.add('soothed');
-    if(lines[strokes])showText(lines[strokes]);
+    sootheTimer=setTimeout(playSoothe,stage.duration);
+  }
+  function soothe(){
+    clearTapSequence();
+    if(focusLocked||behavior.view.sleeping||strokes>=9)return;
+    const now=Date.now();if(now-lastStroke>20000){stopSoothe(true);}lastStroke=now;strokes++;
+    recordInput();
+    const sprite=$('sprite');sprite.classList.remove('soothed');void sprite.offsetWidth;sprite.classList.add('soothed');
+    const stages={
+      1:{text:'……你在摸哪里？',pose:'idle',duration:650},
+      3:{text:'唔……有点困了。',pose:'idle',duration:1100},
+      5:{text:'你让我睡觉我就睡觉吗？',pose:'angry',duration:1400},
+      7:{text:'……再摸一下也不是不行。',pose:'idle',duration:900},
+      8:{text:'我才……没有……困……',pose:'idle',duration:900},
+      9:{text:'……只睡一小会儿。',pose:'sleep',duration:1100}
+    };
+    if(stages[strokes]){sootheQueue.push(Object.assign({count:strokes},stages[strokes]));if(!soothePlaying)playSoothe();}
   }
   function recordInput() {
     if (focusLocked) return;
@@ -338,11 +361,12 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   });
   $("menu-toggle").addEventListener("click", (event) => {
     if(focusLocked){event.preventDefault();return;}
-
+    interruptGestures();updateActivity();
   });
   $("menu-backdrop").addEventListener("click", () => closeMenu(true));
   $("rotate-view").addEventListener("click", () => {
     if (focusLocked) return;
+    interruptGestures();
     state.rotation = (state.rotation + 1) % 4;
     interaction.reset();
     rotateLayout();
@@ -352,7 +376,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   new ResizeObserver(rotateLayout).observe($("app-content"));
   $("guide-back").addEventListener("click", () => {
     $("guide-view").hidden = true;
-    $("companion").inert = false;
+    $("companion").inert = false;updateActivity();
   });
   $("open-settings").addEventListener("click", () => openSheet("preferences"));
   $("open-timer").addEventListener("click", () => openSheet("timer"));
@@ -428,10 +452,11 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   if (prefersReduced.addEventListener) prefersReduced.addEventListener("change", updateActivity);
   else prefersReduced.addListener(updateActivity);
   document.addEventListener("visibilitychange", () => {
+    if(document.hidden)interruptGestures();
     updateActivity();
     persist();
   });
-  window.addEventListener("pagehide", persist);
+  window.addEventListener("pagehide", ()=>{interruptGestures();persist();});
   let lastPointerInput = 0;
   document.addEventListener("pointermove", () => {
     if (Date.now() - lastPointerInput > 1e3) {

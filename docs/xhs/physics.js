@@ -140,7 +140,7 @@ var __spreadValues = (a, b) => {
     end(x, y, id, now = 0) {
       if (!this.origin || id !== this.origin.id) return null;
       this.move(x, y, id, now);
-      const moved = this.moved, result = Math.hypot(this.dx, this.dy) >= 20 ? this.vector(now) : null;
+      const moved=this.moved, vector=this.vector(now), result=Math.hypot(this.dx,this.dy)>=20 && Math.hypot(vector.vx,vector.vy)>=450 ? vector : null;
       this.cancel();
       return { moved, swipe: result };
     }

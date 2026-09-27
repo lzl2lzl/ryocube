@@ -18,12 +18,13 @@ var __spreadValues = (a, b) => {
   "use strict";
   const { clamp, rotate, deadZone, ShakeGate, MotionFilter, SwipeGesture } = RoomPhysics, $ = (id) => document.getElementById(id);
   class RoomInteraction {
-    constructor(room, { onDisturb, onGestureMove, onTap, onStroke, canTap, canInteract }) {
+    constructor(room, { onDisturb, onGestureMove, onTap, onStroke, onGestureStart, canTap, canInteract }) {
       this.room = room;
       this.onDisturb = onDisturb;
       this.onGestureMove = onGestureMove;
       this.onTap = onTap;
       this.onStroke = onStroke;
+      this.onGestureStart = onGestureStart;
       this.canTap = canTap;
       this.canInteract = canInteract;
       this.gate = new ShakeGate();
@@ -45,6 +46,7 @@ var __spreadValues = (a, b) => {
       this.suppressUntil = 0;
       this.sensorUntil = 0;
       this.frame = this.frame.bind(this);
+      this.headPoints=Array.from({length:12},()=>{const point=document.createElement('span');point.className='head-hit-point';point.setAttribute('aria-hidden','true');$('character').appendChild(point);return point;});
       this.bindGestures();
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) this.reset();
@@ -199,8 +201,11 @@ var __spreadValues = (a, b) => {
       this.room.setInteraction(false);
       $("tank").classList.remove("is-quaking");
       $("tank").dataset.motion = "idle";
+      this.stroke=null;this.movementStarted=false;
       this.gesture.cancel();
-      this.pointers.clear();
+      const captured=Array.from(this.pointers);this.pointers.clear();
+      for(const id of captured){try{if($('tank').hasPointerCapture(id))$('tank').releasePointerCapture(id);}catch(e){}}
+      this.suppressUntil=performance.now()+800;
     }
     consumesClick(event) {
       if (event.detail === 0) return false;
@@ -208,86 +213,66 @@ var __spreadValues = (a, b) => {
       this.suppressUntil = 0;
       return suppressed;
     }
+    headContains(x,y) {
+      const fox=this.room.options.fox;
+      if(this.headForm!==fox){
+        this.headForm=fox;
+        this.headPoints.forEach((p,i)=>{const a=i*Math.PI/6;p.style.left=(50+Math.cos(a)*(fox?33:29))+'%';p.style.top=((fox?40:37)+Math.sin(a)*(fox?32:29))+'%';});
+      }
+      const vertices=this.headPoints.map(p=>{const r=p.getBoundingClientRect();return{x:r.left,y:r.top};});
+      let inside=false;
+      for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
+        const a=vertices[i],b=vertices[j];
+        if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+      }
+      return inside;
+    }
+    startMovement(kind){if(!this.movementStarted){this.movementStarted=true;this.onGestureStart(kind);}}
     bindGestures() {
-      const tank = $("tank");
-      tank.addEventListener("pointerdown", (event) => {
-        if (event.target.closest(".bubble.is-scrollable")) return;
-        if (!["touch", "pen"].includes(event.pointerType) || !this.canTap()) return;
-        if (!this.pointers.size) this.suppressUntil = 0;
+      const tank=$('tank');
+      tank.addEventListener('pointerdown',event=>{
+        if(event.target.closest('.bubble.is-scrollable')||!['touch','pen'].includes(event.pointerType)||!this.canTap())return;
+        if(!this.pointers.size)this.suppressUntil=0;
         this.pointers.add(event.pointerId);
-        if (this.pointers.size > 1) {
-          this.stroke=null;
-          this.cancelDrag();
-          this.gesture.cancel();
-          this.suppressUntil = performance.now() + 800;
-          this.onGestureMove();
+        if(this.pointers.size>1){this.stroke=null;this.gesture.cancel();this.cancelDrag();this.movementStarted=false;this.onGestureStart('cancel');this.suppressUntil=performance.now()+800;return;}
+        this.movementStarted=false;
+        this.stroke=event.target.closest('#character')&&this.canInteract()&&this.headContains(event.clientX,event.clientY)?new CubeGestures.PetStroke(event.clientX,event.clientY):null;
+        if(this.stroke)this.stroke.id=event.pointerId;
+        this.gesture.start(event.clientX,event.clientY,event.pointerId,performance.now());
+      },{capture:true});
+      tank.addEventListener('pointermove',event=>{
+        if(this.stroke&&this.stroke.id===event.pointerId){
+          const result=this.stroke.move(event.clientX,event.clientY,this.headContains(event.clientX,event.clientY));
+          if(result.moved){this.onGestureMove();this.startMovement('pet');if(!tank.hasPointerCapture(event.pointerId))tank.setPointerCapture(event.pointerId);this.suppressUntil=performance.now()+800;}
+          if(result.counted&&this.canInteract())this.onStroke();
           return;
         }
-        const rect=$("character").getBoundingClientRect(),local=rotate(event.clientX-rect.left-rect.width/2,event.clientY-rect.top-rect.height/2,-this.angle);
-        const localHeight=this.angle%180?rect.width:rect.height;
-        const head=event.target.closest("#character") && local.y<localHeight*.13;
-        this.stroke = head && this.canInteract() ? {x:event.clientX,y:event.clientY,id:event.pointerId,axis:null,anchor:0,peak:0,direction:0,counted:false,moved:false} : null;
-        this.gesture.start(event.clientX, event.clientY, event.pointerId, performance.now());
-      }, { capture: true });
-      tank.addEventListener("pointermove", (event) => {
-        if(this.stroke && this.stroke.id===event.pointerId){
-          const st=this.stroke,dx=event.clientX-st.x,dy=event.clientY-st.y;
-          if(!st.axis && Math.hypot(dx,dy)>=8){st.axis=Math.abs(dx)>=Math.abs(dy)?'x':'y';st.moved=true;this.onGestureMove();}
-          if(st.axis){
-            const v=st.axis==='x'?dx:dy;
-            if(!tank.hasPointerCapture(event.pointerId))tank.setPointerCapture(event.pointerId);
-            if(!st.direction)st.direction=v>=0?1:-1;
-            if((v-st.peak)*st.direction>0)st.peak=v;
-            if((st.peak-v)*st.direction>=10){st.anchor=st.peak;st.direction*=-1;st.peak=v;st.counted=false;}
-            if(!st.counted && Math.abs(v-st.anchor)>=28){st.counted=true;if(this.canInteract())this.onStroke();}
-            this.suppressUntil=performance.now()+800;
-          }
-          return;
-        }
-        if (this.gesture.move(event.clientX, event.clientY, event.pointerId, performance.now())) {
-          this.onGestureMove();
-          if (!tank.hasPointerCapture(event.pointerId)) tank.setPointerCapture(event.pointerId);
-          if (this.dragging || Math.hypot(this.gesture.dx, this.gesture.dy) >= 20) this.drag(this.gesture.vector(performance.now()));
+        if(this.gesture.move(event.clientX,event.clientY,event.pointerId,performance.now())){
+          this.onGestureMove();this.startMovement('drag');
+          if(!tank.hasPointerCapture(event.pointerId))tank.setPointerCapture(event.pointerId);
+          if(this.dragging||Math.hypot(this.gesture.dx,this.gesture.dy)>=20)this.drag(this.gesture.vector(performance.now()));
         }
       });
-      tank.addEventListener("pointerup", (event) => {
+      tank.addEventListener('pointerup',event=>{
         this.pointers.delete(event.pointerId);
-        const stroke=this.stroke;this.stroke=null;
+        const stroke=this.stroke;
         if(stroke&&stroke.id===event.pointerId){
-          this.gesture.cancel();this.suppressUntil=performance.now()+800;this.onGestureMove();
+          this.stroke=null;this.gesture.cancel();this.suppressUntil=performance.now()+800;this.onGestureMove();
           if(!stroke.moved&&this.canTap())this.onTap();return;
         }
-        const result = this.gesture.end(event.clientX, event.clientY, event.pointerId, performance.now());
-        if (!result) return;
-        if (result.moved) {
-          this.suppressUntil = performance.now() + 700;
-          this.onGestureMove();
-        }
-        if (result.swipe && !this.blocked && this.canInteract()) this.swipe(result.swipe);
-        else if (this.dragging) this.cancelDrag();
-        else if (!result.moved && this.canTap()) {
-          this.suppressUntil = performance.now() + 700;
-          this.onTap();
-        }
+        const result=this.gesture.end(event.clientX,event.clientY,event.pointerId,performance.now());
+        if(!result)return;
+        if(result.moved){this.suppressUntil=performance.now()+800;this.onGestureMove();}
+        if(result.swipe&&!this.blocked&&this.canInteract())this.swipe(result.swipe);
+        else if(this.dragging)this.cancelDrag();
+        else if(!result.moved&&this.canTap()){this.suppressUntil=performance.now()+800;this.onTap();}
       });
-      tank.addEventListener("pointercancel", (event) => {
-        this.stroke=null;
-        this.pointers.delete(event.pointerId);
-        this.cancelDrag();
-        this.gesture.cancel();
-        this.suppressUntil = performance.now() + 700;
-        this.onGestureMove();
-      });
-      tank.addEventListener("lostpointercapture", (event) => {
-        var _a;
-        if (event.target !== tank) return;
-        this.pointers.delete(event.pointerId);
-        if (((_a = this.gesture.origin) == null ? void 0 : _a.id) === event.pointerId) {
-          this.stroke=null;
-          this.cancelDrag();
-          this.gesture.cancel();
-        }
-      });
+      const cancel=event=>{
+        if(!this.pointers.has(event.pointerId))return;
+        this.pointers.delete(event.pointerId);this.stroke=null;this.gesture.cancel();this.cancelDrag();this.onGestureMove();this.movementStarted=false;this.onGestureStart('cancel');this.suppressUntil=performance.now()+800;
+      };
+      tank.addEventListener('pointercancel',cancel);
+      tank.addEventListener('lostpointercapture',event=>{if(event.target===tank)cancel(event);});
     }
   }
   window.RoomInteraction = RoomInteraction;
