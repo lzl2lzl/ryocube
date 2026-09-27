@@ -81,11 +81,11 @@ html:-webkit-full-screen{width:100%;height:100%;background:var(--paper)}
 @supports not (selector(:focus-visible)){button:focus,select:focus,input:focus{outline:2px solid var(--focus);outline-offset:2px}}
 
 /* Reserve native status/navigation controls above the whole interactive room. */
-.companion{margin-top:var(--host-top,88px)}
+.companion{margin-top:var(--host-top,0px)}
 .room-controls{top:17px}
-.panels-viewport{top:calc(var(--host-top,88px) + var(--app-height,100vh) / 2)}
-.alarm-card{top:calc(var(--host-top,88px) + var(--app-height,100vh) / 2)}
-#guide-view{top:var(--host-top,88px)}
+.panels-viewport{top:calc(var(--host-top,0px) + var(--app-height,100vh) / 2)}
+.alarm-card{top:calc(var(--host-top,0px) + var(--app-height,100vh) / 2)}
+#guide-view{top:var(--host-top,0px)}
 
 /* MiniTool controls live in one bottom dock, away from native navigation. */
 .room-controls{top:auto;bottom:17px;bottom:calc(17px + var(--safe-area-inset-bottom,0px));left:17px;right:73px;display:flex;justify-content:space-between}

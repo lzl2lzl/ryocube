@@ -35,7 +35,7 @@
   document.body.appendChild(safeProbe);
   function size() {
     var status=parseFloat(getComputedStyle(safeProbe).paddingTop)||0;
-    var hostTop=Math.max(88,status+56);
+    var hostTop=0;
     document.documentElement.style.setProperty("--host-top",hostTop+"px");
     document.documentElement.style.setProperty("--app-height",Math.max(160,window.innerHeight-hostTop)+"px");
   }
