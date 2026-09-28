@@ -33,11 +33,14 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     weather: ["auto", "clear", "rain", "fog"].includes(saved.weather) ? saved.weather : "auto",
     rotation: Number.isInteger(saved.rotation) ? (saved.rotation % 4 + 4) % 4 : 0,
     fontSize: typeof saved.fontSize === "number" && Number.isFinite(saved.fontSize) ? Math.max(12, Math.min(24, Math.round(saved.fontSize))) : 16,
+    petVibration: saved.petVibration === true,
     reaction: false,
     reactionPose: "angry"
   });
   let bubbleTimeout, reactionTimeout, longPressTimeout, resumeTimer, previousFocus, alarmFocus, currentSheet = null, longPressed = false, pausedUntil = 0, knocks = [], focusLocked = false, clock, interaction;
   const tapSequence=new CubeGestures.TapSequence();
+  const petHaptics=new CubeHaptics();
+  state.petVibration=petHaptics.setEnabled(state.petVibration);
   let tapCommitTimer,strokes=0,lastStroke=0,sootheTimer,soothePlaying=false,sootheQueue=[];
   const prefersReduced = matchMedia("(prefers-reduced-motion: reduce)"), data = window.YUE_DATA;
   const behavior = new RoomBehavior({ config: data.config, dialogue: data.dialogue, persisted: saved.mind || {}, idleMinutes: 1 });
@@ -56,8 +59,8 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     onGestureStart: kind=>{
       clearTapSequence();
       if(kind==='pet'&&!soothePlaying){
-        clearTimeout(reactionTimeout);state.reaction=true;state.reactionPose='idle';updateActivity();
-        reactionTimeout=setTimeout(()=>{if(!soothePlaying){state.reaction=false;updateActivity();}},1200);
+        clearTimeout(reactionTimeout);state.reaction=true;state.reactionPose=strokes>=5&&strokes<8?'angry':'idle';updateActivity();
+        reactionTimeout=setTimeout(()=>{if(!soothePlaying){state.reaction=false;updateActivity();}},strokes>=5&&strokes<8?20000:1200);
       }else if(kind!=='pet'){stopSoothe(kind==='drag');updateActivity();}
     },
     onTap: () => {
@@ -97,8 +100,8 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   } });
   function persist() {
     try {
-      const { fox, autoDismiss, theme, weather, rotation, fontSize } = state;
-      CubeStorage.set(storageKey, JSON.stringify({ fox, autoDismiss, theme, weather, rotation, fontSize, mind: behavior.persist() })).then((ok) => {
+      const { fox, autoDismiss, theme, weather, rotation, fontSize, petVibration } = state;
+      CubeStorage.set(storageKey, JSON.stringify({ fox, autoDismiss, theme, weather, rotation, fontSize, petVibration, mind: behavior.persist() })).then((ok) => {
         canSave = ok;
         $("storage-note").hidden = ok;
       });
@@ -190,6 +193,9 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     $("appearance").value = state.theme;
     $("weather").value = state.weather;
     $("auto-dismiss").checked = state.autoDismiss;
+    $("pet-vibration").checked = state.petVibration;
+    $("pet-vibration").disabled = !petHaptics.supported;
+    $("pet-vibration-note").hidden = petHaptics.supported;
     $("character").setAttribute("aria-label", "".concat(state.fox ? "狐狸形态的角色" : "框里的角色", "，点按敲窗，摸头哄睡"));
     renderFontSize();
     rotateLayout();
@@ -271,8 +277,9 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     tapSequence.reset();knocks=[];clearTimeout(tapCommitTimer);behavior.wakeClicks=[];
   }
   function stopSoothe(resetProgress=false){
+    petHaptics.stop();
     clearTimeout(sootheTimer);sootheQueue=[];
-    if(soothePlaying){clearTimeout(reactionTimeout);state.reaction=false;}
+    if(soothePlaying||(strokes>=5&&strokes<8)){clearTimeout(reactionTimeout);state.reaction=false;}
     soothePlaying=false;$('sprite').classList.remove('soothed');
     if(resetProgress){strokes=0;lastStroke=0;}else strokes=Math.min(strokes,8);
   }
@@ -309,7 +316,14 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     persist();
   }
   function playSoothe(){
-    if(!sootheQueue.length){soothePlaying=false;state.reaction=false;updateActivity();return;}
+    if(!sootheQueue.length){
+      soothePlaying=false;state.reaction=strokes>=5&&strokes<8;
+      if(state.reaction){
+        state.reactionPose='angry';clearTimeout(reactionTimeout);
+        reactionTimeout=setTimeout(()=>{state.reaction=false;updateActivity();},Math.max(0,20000-(Date.now()-lastStroke)));
+      }
+      updateActivity();return;
+    }
     if(focusLocked||currentSheet||!$('guide-view').hidden||!$('alarm-overlay').hidden||document.hidden){stopSoothe();return;}
     const stage=sootheQueue.shift();soothePlaying=true;clearTimeout(reactionTimeout);
     if(stage.count===9){
@@ -317,7 +331,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       if(!behavior.view.sleeping)behavior.toggleSleep();
       behavior.drain();updateActivity();showText(stage.text);persist();
     }else{
-      state.reaction=true;state.reactionPose=stage.pose;updateActivity();showText(stage.text);
+      state.reaction=true;state.reactionPose=stage.pose;updateActivity();if(stage.text)showText(stage.text);
     }
     sootheTimer=setTimeout(playSoothe,stage.duration);
   }
@@ -325,13 +339,14 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     clearTapSequence();
     if(focusLocked||behavior.view.sleeping||strokes>=9)return;
     const now=Date.now();if(now-lastStroke>20000){stopSoothe(true);}lastStroke=now;strokes++;
+    petHaptics.pulse();
     recordInput();
     const sprite=$('sprite');sprite.classList.remove('soothed');void sprite.offsetWidth;sprite.classList.add('soothed');
     const stages={
       1:{text:'……你在摸哪里？',pose:'idle',duration:650},
       3:{text:'唔……有点困了。',pose:'idle',duration:1100},
       5:{text:'你让我睡觉我就睡觉吗？',pose:'angry',duration:1400},
-      7:{text:'……再摸一下也不是不行。',pose:'idle',duration:900},
+      7:{pose:'angry',duration:900},
       8:{text:'我才……没有……困……',pose:'idle',duration:900},
       9:{text:'……只睡一小会儿。',pose:'sleep',duration:1100}
     };
@@ -393,6 +408,11 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   $("auto-dismiss").addEventListener("change", () => {
     state.autoDismiss = $("auto-dismiss").checked;
     scheduleBubbleDismiss();
+    persist();
+  });
+  $("pet-vibration").addEventListener("change", () => {
+    state.petVibration=petHaptics.setEnabled($("pet-vibration").checked);
+    $("pet-vibration").checked=state.petVibration;
     persist();
   });
   $("font-size").addEventListener("input", () => {

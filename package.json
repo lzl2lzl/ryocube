@@ -9,6 +9,6 @@
   "scripts": {
     "build": "node tools/build.mjs",
     "test": "node --test tests/test_room_behavior.js tests/test_room_clock.js tests/test_room_physics.js",
-    "test:xhs": "node --test tests/test_xhs_gestures.cjs tests/test_xhs_swipe.cjs"
+    "test:xhs": "node --test tests/test_xhs_gestures.cjs tests/test_xhs_swipe.cjs tests/test_xhs_haptics.cjs"
   }
 }
