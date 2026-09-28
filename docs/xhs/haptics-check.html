@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#211b2c">
+  <meta name="robots" content="noindex">
+  <title>震动检查 · 霸道了了在房间</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./haptics-check.css">
+  <script src="./haptics.js" defer></script>
+  <script src="./haptics-check.js" defer></script>
+</head>
+<body>
+  <main>
+    <a class="back" href="./">← 回房间</a>
+    <h1>震动检查</h1>
+    <p>依次点一下，感受哪一种会震。<br>不用抚摸，也不用更改房间设置。</p>
+    <p id="support" class="support" role="status">正在检查浏览器支持情况……</p>
+    <div class="tests" aria-label="三种震动时长">
+      <button type="button" data-duration="12"><span>原版短震</span><small>12 毫秒</small></button>
+      <button type="button" data-duration="40"><span>稍长短震</span><small>40 毫秒</small></button>
+      <button type="button" data-duration="120"><span>明显短震</span><small>120 毫秒</small></button>
+    </div>
+    <p id="result" class="result" role="status" aria-live="polite">等待点击。每次只震一下，不会连续震。</p>
+    <p class="note">页面只能检查请求结果，不能感知手机有没有真的震动。请告诉我哪一项有感觉；三项都没有也可以。</p>
+    <section id="apple-check" hidden aria-labelledby="apple-title">
+      <h2 id="apple-title">苹果手机的开关触感</h2>
+      <label class="native-switch" for="apple-switch"><span>点一下这个系统开关</span><input type="checkbox" switch id="apple-switch"></label>
+      <p class="note">这个开关可能有系统触感，但它不等于网页能在抚摸时震动，不能代替抚摸反馈。</p>
+    </section>
+    <details>
+      <summary>检查信息</summary>
+      <pre id="report"></pre>
+      <button type="button" id="copy-report" class="copy">复制检查信息</button>
+      <p id="copy-status" class="note" role="status"></p>
+    </details>
+  </main>
+</body>
+</html>
