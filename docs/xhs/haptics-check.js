@@ -5,10 +5,8 @@
   var report = document.getElementById('report');
   var buttons = document.querySelectorAll('[data-duration]');
   var available = typeof navigator.vibrate === 'function';
-  var haptics = new CubeHaptics();
   var records = [];
   var lastClick = -Infinity;
-  haptics.setEnabled(true);
 
   function updateReport() {
     var activation = navigator.userActivation;
@@ -35,8 +33,8 @@
       var duration = Number(button.getAttribute('data-duration'));
       var accepted;
       try {
-        // The original pulse uses the same module as petting; longer pulses isolate duration.
-        accepted = duration === 12 ? haptics.pulse() : navigator.vibrate(duration);
+        // Archived device diagnostic; the room now uses visual petting feedback only.
+        accepted = navigator.vibrate(duration);
         result.textContent = accepted === false ? duration + ' 毫秒：浏览器拒绝了请求。' : duration + ' 毫秒：请求已发出，请以手上的感觉为准。';
         records.push(duration + 'ms: ' + String(accepted));
       } catch (error) {
